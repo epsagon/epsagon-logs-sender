@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: 'Epsagon Logs Sender'
+Parameters:
+  EpsagonLogsKinesis:
+    Type: String
+Resources:
+  EpsagonHelloWorld:
+    Properties:
+      CodeUri: .
+      Environment:
+        Variables:
+          EPSAGON_KINESIS:
+            Ref: EpsagonLogsKinesis
+      Handler: cloudwatch_log_sender.handler
+      MemorySize: 128
+      Runtime: python3.6
+      Timeout: 60
+    Type: AWS::Serverless::Function
