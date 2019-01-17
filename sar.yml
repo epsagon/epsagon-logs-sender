@@ -4,14 +4,26 @@ Description: 'Epsagon Logs Sender'
 Parameters:
   EpsagonLogsKinesis:
     Type: String
+  AWSSecretID:
+    Type: String
+  AWSSecretKey:
+    Type: String
+  Region:
+    Type: String
 Resources:
   EpsagonLogsSender:
     Properties:
       CodeUri: s3://epsagon-logs-sender/cloudwatch_log_sender.zip
       Environment:
         Variables:
-          EPSAGON_KINESIS:
+          KINESIS_NAME:
             Ref: EpsagonLogsKinesis
+          AWS_ID:
+            Ref: AWSSecretID
+          AWS_KEY:
+            Ref: AWSSecretKey
+          REGION:
+            Ref: Region
       Handler: cloudwatch_log_sender.handler
       MemorySize: 128
       Runtime: python3.6

@@ -1,3 +1,5 @@
+"""Epsagon Logs Parser"""
+
 import json
 import gzip
 import base64
@@ -12,17 +14,41 @@ FILTER_PATTERNS = (
     '.java:7', '.java:8', '.java:9'
 )
 
-AWS_ID = 'AKIAJNG7PBJNO2UE3CIQ'
-AWS_KEY = '009IAN/wMCpGslVdkX2BoeGxyRZeZtgUgkbJNkVX'
-AWS_REGION = 'us-east-1'
+AWS_ID = os.environ.get('AWS_SECRET_ID')
+AWS_KEY = os.environ.get('AWS_SECRET_KEY')
+REGION = os.environ.get('REGION')
 KINESIS_NAME = os.environ.get('EPSAGON_KINESIS')
-
+REGEX = re.compile(
+    '|'.join([f'.*{pattern}.*' for pattern in FILTER_PATTERNS]),
+    re.DOTALL
+)
 kinesis = boto3.client(
     'kinesis',
     aws_access_key_id=AWS_ID,
     aws_secret_access_key=AWS_KEY,
-    region_name=AWS_REGION
+    region_name=REGION
 )
+
+
+def filter_events(record_data, partition_key):
+    """
+    Filter events relevant for Epsagon.
+    :param record_data: Record data that holds the vents.
+    :param partition_key: The record's partition key.
+    :return: dict / None.
+    """
+    if record_data['messageType'] == 'DATA_MESSAGE':
+        events = []
+        for event in record_data['logEvents']:
+            if REGEX.match(event['message']) is not None:
+                events.append(event)
+        if events:
+            record_data['logEvents'] = events
+            return {
+                'Data': gzip.compress(json.dumps(record_data).encode('ascii')),
+                'PartitionKey': partition_key
+            }
+    return
 
 
 def handler(event, _):
@@ -30,34 +56,19 @@ def handler(event, _):
     Send filtered CloudWatch logs to Epsagon Kinesis.
     :param event: The triggered event from Kinesis.
     """
-    regex = re.compile(
-        '|'.join([f'.*{pattern}.*' for pattern in FILTER_PATTERNS]),
-        re.DOTALL
-    )
     records_to_send = []
     for record in event['Records']:
+        partition_key = record['kinesis']['partitionKey']
         compressed_record_data = record['kinesis']['data']
         record_data = json.loads(
             gzip.decompress(
                 base64.b64decode(compressed_record_data)
             )
         )
+        filtered_events = filter_events(record_data, partition_key)
+        if filtered_events:
+            records_to_send.append(filtered_events)
 
-        if record_data['messageType'] == 'DATA_MESSAGE':
-            events = []
-            for event in record_data['logEvents']:
-                if regex.match(event['message']) is not None:
-                    events.append(event)
-            if not events:
-                continue
-                record_data['logEvents'] = events
-            records_to_send.append(
-                {
-                    'Data': gzip.compress(
-                        json.dumps(record_data).encode('ascii')),
-                    'PartitionKey': record['kinesis']['partitionKey']
-                }
-            )
     kinesis.put_records(StreamName=KINESIS_NAME, Records=records_to_send)
 
     return True
