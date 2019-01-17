@@ -5,6 +5,8 @@ import gzip
 import base64
 import os
 import re
+import traceback
+
 import boto3
 
 FILTER_PATTERNS = (
@@ -14,19 +16,20 @@ FILTER_PATTERNS = (
     '.java:7', '.java:8', '.java:9'
 )
 
-AWS_ID = os.environ.get('AWS_SECRET_ID')
-AWS_KEY = os.environ.get('AWS_SECRET_KEY')
+AWS_ID = os.environ.get('AWS_ID')
+AWS_KEY = os.environ.get('AWS_KEY')
 REGION = os.environ.get('REGION')
 KINESIS_NAME = os.environ.get('EPSAGON_KINESIS')
 REGEX = re.compile(
     '|'.join([f'.*{pattern}.*' for pattern in FILTER_PATTERNS]),
     re.DOTALL
 )
+
 kinesis = boto3.client(
     'kinesis',
     aws_access_key_id=AWS_ID,
     aws_secret_access_key=AWS_KEY,
-    region_name=REGION
+    region_name=REGION,
 )
 
 
@@ -70,8 +73,21 @@ def handler(event, _):
             if filtered_events:
                 records_to_send.append(filtered_events)
 
-        kinesis.put_records(StreamName=KINESIS_NAME, Records=records_to_send)
+        original_access_key = os.environ.pop('AWS_ACCESS_KEY_ID')
+        original_secret_key = os.environ.pop('AWS_SECRET_ACCESS_KEY')
+        original_region = os.environ.pop('AWS_REGION')
+        os.environ['AWS_ACCESS_KEY_ID'] = AWS_ID
+        os.environ['AWS_SECRET_ACCESS_KEY'] = AWS_KEY
+        os.environ['AWS_REGION'] = REGION
+        try:
+            kinesis.put_records(StreamName=KINESIS_NAME,
+                                Records=records_to_send)
+        finally:
+            os.environ[' '] = original_access_key
+            os.environ['AWS_SECRET_ACCESS_KEY'] = original_secret_key
+            os.environ['AWS_REGION'] = original_region
+
     except Exception as e:
-        print(e)
+        print(traceback.format_exc())
 
     return True
