@@ -16,7 +16,7 @@ Resources:
       CodeUri: s3://epsagon-logs-sender/cloudwatch_log_sender.zip
       Environment:
         Variables:
-          KINESIS_NAME:
+          EPSAGON_KINESIS:
             Ref: EpsagonLogsKinesis
           AWS_ID:
             Ref: AWSSecretID

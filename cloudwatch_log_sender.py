@@ -56,19 +56,22 @@ def handler(event, _):
     Send filtered CloudWatch logs to Epsagon Kinesis.
     :param event: The triggered event from Kinesis.
     """
-    records_to_send = []
-    for record in event['Records']:
-        partition_key = record['kinesis']['partitionKey']
-        compressed_record_data = record['kinesis']['data']
-        record_data = json.loads(
-            gzip.decompress(
-                base64.b64decode(compressed_record_data)
+    try:
+        records_to_send = []
+        for record in event['Records']:
+            partition_key = record['kinesis']['partitionKey']
+            compressed_record_data = record['kinesis']['data']
+            record_data = json.loads(
+                gzip.decompress(
+                    base64.b64decode(compressed_record_data)
+                )
             )
-        )
-        filtered_events = filter_events(record_data, partition_key)
-        if filtered_events:
-            records_to_send.append(filtered_events)
+            filtered_events = filter_events(record_data, partition_key)
+            if filtered_events:
+                records_to_send.append(filtered_events)
 
-    kinesis.put_records(StreamName=KINESIS_NAME, Records=records_to_send)
+        kinesis.put_records(StreamName=KINESIS_NAME, Records=records_to_send)
+    except Exception as e:
+        print(e)
 
     return True
