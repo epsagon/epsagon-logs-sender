@@ -12,9 +12,17 @@ FILTER_PATTERNS = (
     '.java:7', '.java:8', '.java:9'
 )
 
-kinesis = boto3.client('kinesis')
+AWS_ID = 'AKIAJNG7PBJNO2UE3CIQ'
+AWS_KEY = '009IAN/wMCpGslVdkX2BoeGxyRZeZtgUgkbJNkVX'
+AWS_REGION = 'us-east-1'
+KINESIS_NAME = os.environ.get('EPSAGON_KINESIS')
 
-KINESIS_NAME = os.environ.get('EPSAON_KINESIS')
+kinesis = boto3.client(
+    'kinesis',
+    aws_access_key_id=AWS_ID,
+    aws_secret_access_key=AWS_KEY,
+    region_name=AWS_REGION
+)
 
 
 def handler(event, _):
@@ -22,7 +30,6 @@ def handler(event, _):
     Send filtered CloudWatch logs to Epsagon Kinesis.
     :param event: The triggered event from Kinesis.
     """
-    print(event)
     regex = re.compile(
         '|'.join([f'.*{pattern}.*' for pattern in FILTER_PATTERNS]),
         re.DOTALL
