@@ -16,18 +16,4 @@ Resources:
       MemorySize: 128
       Runtime: python3.6
       Timeout: 60
-      Policies:
-       - AWSLambdaExecute # Managed Policy
-       - Version: '2012-10-17' # Policy Document
-         Statement:
-           - Effect: Allow
-             Action:
-               - logs:CreateLogStream
-               - logs:PutLogEvents
-             Resource: 'arn:aws:logs:*:*:log-group:*:*'
-           - Effect: Allow
-             Action:
-               - logs:CreateLogStream
-               - logs:PutLogEvents
-             Resource: 'arn:aws:logs:us-*:*:*'
     Type: AWS::Serverless::Function
