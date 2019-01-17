@@ -83,7 +83,7 @@ def handler(event, _):
             kinesis.put_records(StreamName=KINESIS_NAME,
                                 Records=records_to_send)
         finally:
-            os.environ[' '] = original_access_key
+            os.environ['AWS_ACCESS_KEY_ID'] = original_access_key
             os.environ['AWS_SECRET_ACCESS_KEY'] = original_secret_key
             os.environ['AWS_REGION'] = original_region
 
