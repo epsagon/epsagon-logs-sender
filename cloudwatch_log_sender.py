@@ -16,10 +16,12 @@ FILTER_PATTERNS = (
     '.java:7', '.java:8', '.java:9'
 )
 
-AWS_ID = os.environ.get('AWS_ID')
-AWS_KEY = os.environ.get('AWS_KEY')
-REGION = os.environ.get('REGION')
-KINESIS_NAME = os.environ.get('EPSAGON_KINESIS')
+DEGUG_STRING = 'DEBUG'
+STAGE = os.environ.get('STAGE', '').strip()
+AWS_ID = os.environ.get('AWS_ID').strip()
+AWS_KEY = os.environ.get('AWS_KEY').strip()
+REGION = os.environ.get('REGION').strip()
+KINESIS_NAME = os.environ.get('EPSAGON_KINESIS').strip()
 REGEX = re.compile(
     '|'.join([f'.*{pattern}.*' for pattern in FILTER_PATTERNS]),
     re.DOTALL
@@ -41,10 +43,13 @@ def filter_events(record_data, partition_key):
     :return: dict / None.
     """
     if record_data['messageType'] == 'DATA_MESSAGE':
+        original_events = record_data['logEvents']
         events = []
-        for event in record_data['logEvents']:
+        print_if_needed(f'Found total of {original_events} events')
+        for event in original_events:
             if REGEX.match(event['message']) is not None:
                 events.append(event)
+        print_if_needed(f'Filtered total of {len(events)} events.')
         if events:
             record_data['logEvents'] = events
             return {
@@ -80,8 +85,10 @@ def handler(event, _):
         os.environ['AWS_SECRET_ACCESS_KEY'] = AWS_KEY
         os.environ['AWS_REGION'] = REGION
         try:
-            kinesis.put_records(StreamName=KINESIS_NAME,
-                                Records=records_to_send)
+            if records_to_send:
+                print_if_needed(f'Sending {len(records_to_send)} to Kinesis')
+                kinesis.put_records(StreamName=KINESIS_NAME,
+                                    Records=records_to_send)
         finally:
             os.environ['AWS_ACCESS_KEY_ID'] = original_access_key
             os.environ['AWS_SECRET_ACCESS_KEY'] = original_secret_key
@@ -91,3 +98,8 @@ def handler(event, _):
         print(traceback.format_exc())
 
     return True
+
+
+def print_if_needed(message):
+    if STAGE.lower() == DEGUG_STRING.lower():
+        print(message)
