@@ -10,7 +10,7 @@ Parameters:
     Type: String
   Region:
     Type: String
-  S:
+  Stage:
     Type: String
 Resources:
   EpsagonLogsSender:
@@ -26,6 +26,8 @@ Resources:
             Ref: AWSSecretKey
           REGION:
             Ref: Region
+          STAGE:
+            Ref: Stage
       Handler: cloudwatch_log_sender.handler
       MemorySize: 128
       Runtime: python3.6
