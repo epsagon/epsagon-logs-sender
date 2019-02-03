@@ -45,7 +45,7 @@ def filter_events(record_data, partition_key):
     if record_data['messageType'] == 'DATA_MESSAGE':
         original_events = record_data['logEvents']
         events = []
-        print_if_needed(f'Found total of {original_events} events')
+        print_if_needed(f'Found total of {len(original_events)} events')
         for event in original_events:
             if REGEX.match(event['message']) is not None:
                 events.append(event)
@@ -86,7 +86,9 @@ def handler(event, _):
         os.environ['AWS_REGION'] = REGION
         try:
             if records_to_send:
-                print_if_needed(f'Sending {len(records_to_send)} to Kinesis')
+                print_if_needed(
+                    f'Sending {len(records_to_send)} events to Kinesis'
+                )
                 kinesis.put_records(StreamName=KINESIS_NAME,
                                     Records=records_to_send)
         finally:
