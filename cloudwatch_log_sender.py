@@ -46,6 +46,7 @@ def filter_events(record_data, partition_key):
         original_events = record_data['logEvents']
         events = []
         print_if_needed(f'Found total of {len(original_events)} events')
+        print_if_needed(f'Original events: {original_events}')
         for event in original_events:
             if REGEX.match(event['message']) is not None:
                 events.append(event)
