@@ -92,7 +92,7 @@ def forward_logs_to_epsagon(event):
         try:
             kinesis.put_record(
                 StreamName=KINESIS_NAME,
-                Record=filtered_event['Data'],
+                Data=filtered_event['Data'],
                 PartitionKey=filtered_event['PartitionKey'],
             )
         finally:
