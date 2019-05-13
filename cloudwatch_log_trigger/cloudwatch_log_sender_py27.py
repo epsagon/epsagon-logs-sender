@@ -6,6 +6,13 @@ Epsagon Logs Parser, parse CloudWatch Logs event
 	- EPSAGON_REGION: us-east-1
 	- EPSAGON_KINESIS_NAME: logs-sender-logs-stream-kinesis-us-east-1-production
 	- EPSAGON_AWS_ROLE: xxx
+3. Add this permission to your Lambda's IAM role:
+{
+    "Sid": "VisualEditorX",
+    "Effect": "Allow",
+    "Action": "sts:AssumeRole",
+    "Resource": "*"
+}
 """
 
 import json
