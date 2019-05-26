@@ -3,13 +3,18 @@ var util = require('util');
 var AWS = require('aws-sdk');
 
 
-const FILTER_PATTERNS = [
-        'REPORT', 'Task timed out', 'Process exited before completing', 'Traceback',
-        'module initialization error:', 'Unable to import module', 'errorMessage',
-        '.java:0', '.java:1', '.java:2', '.java:3', '.java:4', '.java:5', '.java:6',
-        '.java:7', '.java:8', '.java:9'
+const PREFIX_PATTERNS = [
+    'REPORT', 'Unable to import module'
     ];
-const REGEX = new RegExp(FILTER_PATTERNS.map(function(item) {
+const INCLUDES_PATTERNS = [
+    'Task timed out', 'Process exited before completing',
+    'Traceback', 'module initialization error:', 'errorMessage'
+    ];
+
+const FILTER_PATTERN = PREFIX_PATTERNS.map(function(item) {
+        return util.format('%s.*', item)
+    }).join('|')
+const REGEX = new RegExp(FILTER_PATTERN + INCLUDES_PATTERNS.map(function(item) {
         return util.format('.*%s.*', item)
     }).join('|'));
 
@@ -26,8 +31,10 @@ function epsagon_debug(error) {
     }
 }
 
-function forwardLogs(event) {
+module.exports.forwardLogs = function forwardLogs(event) {
     return new Promise((resolve, reject) => {
+        epsagon_debug('Attempting to forward logs');
+
         var zippedInput = new Buffer(event.awslogs.data, 'base64');
         zlib.gunzip(zippedInput, function (e, buffer) {
             if (e) {
@@ -35,6 +42,7 @@ function forwardLogs(event) {
                 resolve();
                 return;
             }
+            
 
             var awslogsData = JSON.parse(buffer.toString('utf-8'));
 
@@ -48,6 +56,7 @@ function forwardLogs(event) {
 
             awslogsData.logEvents.forEach(function (log, idx, arr) {
                 if (log.message.match(REGEX)) {
+                    epsagon_debug(util.format('Match found for line %d', idx));
                     forwadedMsgs.push(log)
                 }
             });
@@ -71,6 +80,8 @@ function forwardLogs(event) {
                           PartitionKey: awslogsData.logStream,
                           StreamName: process.env.EPSAGON_KINESIS_NAME
                         };
+
+                        epsagon_debug(util.format('About to forward %d records', forwadedMsgs.length));
 
                         KINESIS_CLIENT.putRecord(params, function(err, data) {
                           if (err) {
