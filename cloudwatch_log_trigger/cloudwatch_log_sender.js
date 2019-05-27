@@ -36,13 +36,15 @@ module.exports.forwardLogs = function forwardLogs(event) {
         epsagon_debug('Attempting to forward logs');
 
         var zippedInput = new Buffer(event.awslogs.data, 'base64');
+        epsagon_debug(util.format('Size before compression %d bytes', zippedInput.length));
         zlib.gunzip(zippedInput, function (e, buffer) {
             if (e) {
                 epsagon_debug(e);
                 resolve();
                 return;
             }
-            
+
+            epsagon_debug(util.format('Size after decompression %d bytes', buffer.length));
 
             var awslogsData = JSON.parse(buffer.toString('utf-8'));
 
@@ -54,8 +56,10 @@ module.exports.forwardLogs = function forwardLogs(event) {
             
             var forwadedMsgs = [];
 
+            epsagon_debug(util.format('Scanning %d lines', awslogsData.logEvents.length));
+            
             awslogsData.logEvents.forEach(function (log, idx, arr) {
-                if (log.message.match(REGEX)) {
+                if (log.message.slice(0, 100).match(REGEX)) {
                     epsagon_debug(util.format('Match found for line %d', idx));
                     forwadedMsgs.push(log)
                 }
