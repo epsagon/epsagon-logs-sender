@@ -3,20 +3,12 @@ var util = require('util');
 var AWS = require('aws-sdk');
 
 
-const PREFIX_PATTERNS = [
-    'REPORT', 'Unable to import module'
-    ];
-const INCLUDES_PATTERNS = [
-    'Task timed out', 'Process exited before completing',
-    'Traceback', 'module initialization error:', 'errorMessage'
-    ];
-
-const FILTER_PATTERN = PREFIX_PATTERNS.map(function(item) {
-        return util.format('%s.*', item)
-    }).join('|')
-const REGEX = new RegExp(FILTER_PATTERN + INCLUDES_PATTERNS.map(function(item) {
-        return util.format('.*%s.*', item)
-    }).join('|'));
+const PATTERNS = [
+    'REPORT', 'Unable to import module', 'Task timed out',
+    'Process exited before completing', 'Traceback',
+    'module initialization error:', 'errorMessage'
+];
+const MAX_STR_SIZE = 100;
 
 const KINESIS_CLIENT = new AWS.Kinesis({
     region: process.env.EPSAGON_REGION,
@@ -59,13 +51,14 @@ module.exports.forwardLogs = function forwardLogs(event) {
             epsagon_debug(util.format('Scanning %d lines', awslogsData.logEvents.length));
             
             awslogsData.logEvents.forEach(function (log, idx, arr) {
-                if (log.message.slice(0, 100).match(REGEX)) {
-                    epsagon_debug(util.format('Match found for line %d', idx));
-                    forwadedMsgs.push(log)
-                }
+                PATTERNS.forEach(pattern => {
+                    if (log.message.slice(0, MAX_STR_SIZE).indexOf(pattern) >= 0) {
+                        forwadedMsgs.push(log)
+                    }
+                })
             });
 
-            if (forwadedMsgs.length != 0) {
+            if (forwadedMsgs.length !== 0) {
                 awslogsData.logEvents = forwadedMsgs;
                 awslogsData.subscriptionFilters = [];
                 awslogsData.subscriptionFilters.push(util.format('Epsagon#%s#%s', awslogsData.owner, process.env.AWS_REGION));
