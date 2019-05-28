@@ -58,6 +58,8 @@ module.exports.forwardLogs = function forwardLogs(event) {
                 })
             });
 
+            epsagon_debug('Done scanning');
+
             if (forwadedMsgs.length !== 0) {
                 awslogsData.logEvents = forwadedMsgs;
                 awslogsData.subscriptionFilters = [];
@@ -81,6 +83,8 @@ module.exports.forwardLogs = function forwardLogs(event) {
                         epsagon_debug(util.format('About to forward %d records', forwadedMsgs.length));
 
                         KINESIS_CLIENT.putRecord(params, function(err, data) {
+                          epsagon_debug('Record sent');
+                          epsagon_debug(data);
                           if (err) {
                             epsagon_debug(err);
                           }
@@ -88,6 +92,7 @@ module.exports.forwardLogs = function forwardLogs(event) {
                         });
                     }
                     catch (e) {
+                        epsagon_debug('Got error in forwarding');
                         epsagon_debug(e);
                         resolve();
                     }     
