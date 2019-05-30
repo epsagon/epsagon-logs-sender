@@ -16,7 +16,7 @@ FILTER_PATTERNS = (
 )
 
 
-AWS_ID = os.environ.get('EPSAGON_AWS_SECRET_ACCESS_KEY').strip()
+AWS_SECRET = os.environ.get('EPSAGON_AWS_SECRET_ACCESS_KEY').strip()
 AWS_KEY = os.environ.get('EPSAGON_AWS_ACCESS_KEY_ID').strip()
 REGION = os.environ.get('EPSAGON_REGION').strip()
 KINESIS_NAME = os.environ.get('EPSAGON_KINESIS_NAME').strip()
@@ -86,8 +86,8 @@ def forward_logs_to_epsagon(event):
         original_access_key = os.environ.pop('AWS_ACCESS_KEY_ID')
         original_secret_key = os.environ.pop('AWS_SECRET_ACCESS_KEY')
         original_region = os.environ.pop('AWS_REGION')
-        os.environ['AWS_ACCESS_KEY_ID'] = AWS_ID
-        os.environ['AWS_SECRET_ACCESS_KEY'] = AWS_KEY
+        os.environ['AWS_ACCESS_KEY_ID'] = AWS_KEY
+        os.environ['AWS_SECRET_ACCESS_KEY'] = AWS_SECRET
         os.environ['AWS_REGION'] = REGION
         try:
             kinesis.put_record(
