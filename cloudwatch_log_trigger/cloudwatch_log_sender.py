@@ -27,8 +27,8 @@ REGEX = re.compile(
 
 kinesis = boto3.client(
     'kinesis',
-    aws_access_key_id=AWS_ID,
-    aws_secret_access_key=AWS_KEY,
+    aws_access_key_id=AWS_KEY,
+    aws_secret_access_key=AWS_SECRET,
     region_name=REGION,
 )
 
