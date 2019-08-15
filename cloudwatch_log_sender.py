@@ -81,10 +81,8 @@ def handler(event, _):
 
         original_access_key = os.environ.pop('AWS_ACCESS_KEY_ID')
         original_secret_key = os.environ.pop('AWS_SECRET_ACCESS_KEY')
-        original_region = os.environ.pop('AWS_REGION')
         os.environ['AWS_ACCESS_KEY_ID'] = AWS_ID
         os.environ['AWS_SECRET_ACCESS_KEY'] = AWS_KEY
-        os.environ['AWS_REGION'] = REGION
         try:
             if records_to_send:
                 print_if_needed(
@@ -95,7 +93,6 @@ def handler(event, _):
         finally:
             os.environ['AWS_ACCESS_KEY_ID'] = original_access_key
             os.environ['AWS_SECRET_ACCESS_KEY'] = original_secret_key
-            os.environ['AWS_REGION'] = original_region
 
     except Exception as e:
         print(traceback.format_exc())

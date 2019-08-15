@@ -19,6 +19,7 @@ FILTER_PATTERNS = (
 AWS_SECRET = os.environ.get('EPSAGON_AWS_SECRET_ACCESS_KEY').strip()
 AWS_KEY = os.environ.get('EPSAGON_AWS_ACCESS_KEY_ID').strip()
 REGION = os.environ.get('EPSAGON_REGION').strip()
+CURRENT_REGION = os.environ.get('AWS_REGION').strip()
 KINESIS_NAME = os.environ.get('EPSAGON_KINESIS_NAME').strip()
 REGEX = re.compile(
     '|'.join([f'.*{pattern}.*' for pattern in FILTER_PATTERNS]),
@@ -49,7 +50,7 @@ def filter_events(record_data):
         original_events = record_data['logEvents']
         partition_key = record_data['logStream']
         record_data['subscriptionFilters'] = (
-            [f'Epsagon#{record_data["owner"]}#{os.getenv("AWS_REGION")}']
+            [f'Epsagon#{record_data["owner"]}#{CURRENT_REGION}']
         )
         events = []
         epsagon_debug(f'Found total of {len(original_events)} events')
@@ -85,10 +86,8 @@ def forward_logs_to_epsagon(event):
 
         original_access_key = os.environ.pop('AWS_ACCESS_KEY_ID')
         original_secret_key = os.environ.pop('AWS_SECRET_ACCESS_KEY')
-        original_region = os.environ.pop('AWS_REGION')
         os.environ['AWS_ACCESS_KEY_ID'] = AWS_KEY
         os.environ['AWS_SECRET_ACCESS_KEY'] = AWS_SECRET
-        os.environ['AWS_REGION'] = REGION
         try:
             kinesis.put_record(
                 StreamName=KINESIS_NAME,
@@ -98,7 +97,6 @@ def forward_logs_to_epsagon(event):
         finally:
             os.environ['AWS_ACCESS_KEY_ID'] = original_access_key
             os.environ['AWS_SECRET_ACCESS_KEY'] = original_secret_key
-            os.environ['AWS_REGION'] = original_region
 
     except Exception as err:
         epsagon_debug('Encountered error: {}'.format(err))
