@@ -23,11 +23,11 @@ function epsagon_debug(error) {
     }
 }
 
-module.exports.forwardLogs = function forwardLogs(event) {
+module.exports.forwardLogsData = function forwardLogsData(logsData) {
     return new Promise((resolve, reject) => {
         epsagon_debug('Attempting to forward logs');
 
-        var zippedInput = new Buffer(event.awslogs.data, 'base64');
+        var zippedInput = new Buffer(logsData, 'base64');
         epsagon_debug(util.format('Size before compression %d bytes', zippedInput.length));
         zlib.gunzip(zippedInput, function (e, buffer) {
             if (e) {
@@ -45,11 +45,11 @@ module.exports.forwardLogs = function forwardLogs(event) {
                 resolve();
                 return;
             }
-            
+
             var forwadedMsgs = [];
 
             epsagon_debug(util.format('Scanning %d lines', awslogsData.logEvents.length));
-            
+
             awslogsData.logEvents.forEach(function (log, idx, arr) {
                 PATTERNS.forEach(pattern => {
                     if (log.message.slice(0, MAX_STR_SIZE).indexOf(pattern) >= 0) {
@@ -95,9 +95,24 @@ module.exports.forwardLogs = function forwardLogs(event) {
                         epsagon_debug('Got error in forwarding');
                         epsagon_debug(e);
                         resolve();
-                    }     
+                    }
                 })
             }
         });
     });
 }
+
+// Lambda handler for forwarding logs either from CloudWatch logs trigger, or from a
+//  Kinesis stream of a CloudWatch subscription
+module.exports.forwardLogsLambdaHandler = function forwardLogsLambdaHandler(event, context) {
+    if (event.awslogs) {
+        return module.exports.forwardLogsData(event.awslogs.data);
+    }
+
+    if (event.Records) {
+        event.Records.forEach(function(record) {
+            module.exports.forwardLogsData(record.kinesis.data);
+        });
+    }
+};
+
