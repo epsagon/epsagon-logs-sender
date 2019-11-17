@@ -20,8 +20,11 @@ DEGUG_STRING = 'DEBUG'
 STAGE = os.environ.get('STAGE', '').strip()
 AWS_ID = os.environ.get('AWS_ID').strip()
 AWS_KEY = os.environ.get('AWS_KEY').strip()
-REGION = os.environ.get('REGION').strip()
+REGION = os.environ.get('EPSAGON_REGION').strip()
+CURRENT_REGION = os.environ.get('AWS_REGION').strip()
 KINESIS_NAME = os.environ.get('EPSAGON_KINESIS').strip()
+OVERRIDE_SUBSCRIPTIONS = os.environ.get('OVERRIDE_SUBSCRIPTIONS', '').strip()
+
 REGEX = re.compile(
     '|'.join([f'.*{pattern}.*' for pattern in FILTER_PATTERNS]),
     re.DOTALL
@@ -44,6 +47,10 @@ def filter_events(record_data, partition_key):
     """
     if record_data['messageType'] == 'DATA_MESSAGE':
         original_events = record_data['logEvents']
+        if OVERRIDE_SUBSCRIPTIONS.lower() == 'true':
+            record_data['subscriptionFilters'] = (
+                [f'Epsagon#{record_data["owner"]}#{CURRENT_REGION}']
+            )
         events = []
         print_if_needed(f'Found total of {len(original_events)} events')
         print_if_needed(f'Original events: {original_events}')
