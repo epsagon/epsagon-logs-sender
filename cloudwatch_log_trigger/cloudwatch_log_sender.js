@@ -27,7 +27,7 @@ module.exports.forwardLogsData = function forwardLogsData(logsData) {
     return new Promise((resolve, reject) => {
         epsagon_debug('Attempting to forward logs');
 
-        var zippedInput = new Buffer(logsData, 'base64');
+        var zippedInput = new Buffer.from(logsData, 'base64');
         epsagon_debug(util.format('Size before compression %d bytes', zippedInput.length));
         zlib.gunzip(zippedInput, function (e, buffer) {
             if (e) {
@@ -65,7 +65,7 @@ module.exports.forwardLogsData = function forwardLogsData(logsData) {
                 awslogsData.subscriptionFilters = [];
                 awslogsData.subscriptionFilters.push(util.format('Epsagon#%s#%s', awslogsData.owner, process.env.AWS_REGION));
 
-                zlib.gzip(new Buffer(JSON.stringify(awslogsData), 'ascii'), function (e, buffer) {
+                zlib.gzip(new Buffer.from(JSON.stringify(awslogsData), 'ascii'), function (e, buffer) {
                     if (e) {
                         epsagon_debug('Failed compressing result');
                         resolve();
