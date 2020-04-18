@@ -45,6 +45,8 @@ def filter_events(record_data, partition_key):
     :param partition_key: The record's partition key.
     :return: dict / None.
     """
+    print_if_needed(f'record data: {record_data}')
+    print_if_needed(f'partition key: {partition_key}')
     if record_data['messageType'] == 'DATA_MESSAGE':
         original_events = record_data['logEvents']
         if OVERRIDE_SUBSCRIPTIONS.lower() == 'true':
