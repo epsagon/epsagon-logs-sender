@@ -30,7 +30,6 @@ function createRecord(logsData) {
   return {
     Data: createRecordData(logsData.logEvents),
     PartitionKey: logsData.logStream,
-    StreamName: userLogsKinesis,
   };
 }
 
@@ -52,18 +51,19 @@ function mapToEpsagonRecord(record) {
 }
 
 function forwardLambdaHandler(event, _) {
-  const records = event.Records;
-
-  for (const record of records) {
-    const epsagonRecord = mapToEpsagonRecord(record);
-    kinesisClient.putRecord(epsagonRecord, function (err, data) {
-      epsagon_debug("Record sent");
-      epsagon_debug(data);
-      if (err) {
-        epsagon_debug(err);
+  const records = Promise.all(event.Records.map(mapToEpsagonRecord));
+  records.then((records) => {
+    kinesisClient.putRecords(
+      { Records: records, StreamName: userLogsKinesis },
+      function (err, data) {
+        epsagon_debug("Record sent");
+        epsagon_debug(data);
+        if (err) {
+          epsagon_debug(err);
+        }
       }
-    });
-  }
+    );
+  });
 }
 
 module.exports = { forwardLambdaHandler };
