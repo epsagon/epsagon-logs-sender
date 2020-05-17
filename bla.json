@@ -1,0 +1,24 @@
+{
+  "owner": "111111111111",
+  "logGroup": "CloudTrail",
+  "logStream": "111111111111_CloudTrail_us-east-1",
+  "subscriptionFilters": ["RecipientStream"],
+  "messageType": "DATA_MESSAGE",
+  "logEvents": [
+    {
+      "id": "3195310660696698337880902507980421114328961542429EXAMPLE",
+      "timestamp": 1432826855000,
+      "message": "{\"eventVersion\":\"1.03\",\"userIdentity\":{\"type\":\"Root\"}"
+    },
+    {
+      "id": "3195310660696698337880902507980421114328961542429EXAMPLE",
+      "timestamp": 1432826855000,
+      "message": "{\"eventVersion\":\"1.03\",\"userIdentity\":{\"type\":\"Root\"}"
+    },
+    {
+      "id": "3195310660696698337880902507980421114328961542429EXAMPLE",
+      "timestamp": 1432826855000,
+      "message": "{\"eventVersion\":\"1.03\",\"userIdentity\":{\"type\":\"Root\"}"
+    }
+  ]
+}

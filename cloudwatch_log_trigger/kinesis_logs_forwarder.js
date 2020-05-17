@@ -6,12 +6,14 @@ const util = require("util");
 const zlib = require("zlib");
 const AWS = require("aws-sdk");
 
-const kinesisClient = new AWS.Kinesis({ region: process.env.EPSAGON_REGION });
-const gunzip = util.promisify(zlib.gunzip);
-const putRecords = util.promisify(kinesisClient.putRecords);
-
 const epsagonToken = process.env.EPSAGON_TOKEN;
 const userLogsKinesis = process.env.EPSAGON_LOGS_KINESIS;
+const gunzip = util.promisify(zlib.gunzip);
+const kinesisClient = new AWS.Kinesis({
+  region: process.env.EPSAGON_REGION,
+  accessKeyId: process.env.EPSAGON_AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.EPSAGON_AWS_SECRET_ACCESS_KEY,
+});
 
 function epsagon_debug(error) {
   if ((process.env.EPSAGON_DEBUG || "").toUpperCase() === "TRUE") {
@@ -36,9 +38,9 @@ function createRecord(logsData) {
 
 async function mapToEpsagonRecord(record) {
   const data = record.kinesis.data;
-  const decoded = new Buffer.from(data, "base64").toString("utf-8");
+  const decoded = new Buffer.from(data, "base64");
   const unzipped = await gunzip(decoded);
-  const logsData = JSON.parse(unzipped);
+  const logsData = JSON.parse(unzipped.toString("utf-8"));
 
   if (logsData.messageType !== "DATA_MESSAGE") {
     epsagon_debug("invalid messageType");
@@ -58,10 +60,12 @@ async function forwardLambdaHandler(event, _) {
   if (filtered.length === 0) return;
 
   try {
-    const data = await putRecords({
-      Records: filtered,
-      StreamName: userLogsKinesis,
-    });
+    const data = await kinesisClient
+      .putRecords({
+        Records: filtered,
+        StreamName: userLogsKinesis,
+      })
+      .promise();
 
     epsagon_debug("Record sent");
     epsagon_debug(data);
